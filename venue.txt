@@ -1,1 +1,5 @@
 SG:SG001:Lecture Hall:300:New Venue available for booking:Available
+K:K100:Tutorial Room:26:Under Maintenance:Available
+B:B001:Lab:26:For Practical Use only:Available
+B:B001A:Lab:24:For Practical Use only:Available
+B:B001B:Lab:26:For Practical use only:Available
