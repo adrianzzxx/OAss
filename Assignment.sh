@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Function to check if the email is valid
+is_valid_email() {
+    local email=$1
+    local regex='^[A-Za-z0-9._%+-]+@student\.tarc\.edu\.my$'
+    if [[ $email =~ $regex ]]; then
+        return 0  # Valid email format
+    else
+        return 1  # Invalid email format
+    fi
+}
+
 # Function to handle the A option (Register New Patron)
 register_patron() {
     clear
@@ -9,7 +20,16 @@ register_patron() {
     read -p "Patron ID (As per TAR UMT format): " patron_id
     read -p "Patron Full Name (As per NRIC): " full_name
     read -p "Contact Number: " contact_number
-    read -p "Email Address (As per TAR UMT format): " email_address
+
+    # Validate the email address
+    while true; do
+        read -p "Email Address (As per TAR UMT format): " email_address
+        if is_valid_email "$email_address"; then
+            break
+        else
+            echo "Invalid email format. Please enter a valid email address."
+        fi
+    done
 
     # Store patron details in the patron.txt file
     echo "$patron_id:$full_name:$contact_number:$email_address" >> patron.txt
@@ -59,10 +79,54 @@ search_patron() {
 }
 
 # Function to handle the C option (Add New Venue)
-# ... (Add your implementation for option C here)
+add_new_venue() {
+    clear
+    echo "Add New Venue"
+    echo "=============="
+
+    read -p "Block Name: " block_name
+    read -p "Room Number: " room_number
+    read -p "Room Type: " room_type
+    read -p "Capacity: " capacity
+    read -p "Remarks: " remarks
+
+    # Store venue details in the venue.txt file
+    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
+
+    echo
+    read -p "Add Another New Venue? (y)es or (q)uit: " choice
+    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+        add_new_venue
+    else
+        main_menu
+    fi
+}
 
 # Function to handle the D option (List Venue)
-# ... (Add your implementation for option D here)
+list_venue_details() {
+    clear
+    echo "List Venue Details"
+    echo
+
+    read -p "Enter Block Name: " search_block
+    echo "--------------------------------------------------------------------------------------------"
+    # Filter and display venue details based on the block name
+    printf "%-15s%-25s%-15s%-35s%-15s\n" "Room Number" "Room Type" "Capacity" "Remarks" "Status"
+    echo
+
+    grep "^$search_block:" venue.txt | while IFS=':' read -r block_name room_number room_type capacity remarks status; do
+        printf "%-15s%-25s%-15s%-35s%-15s\n" "$room_number" "$room_type" "$capacity" "$remarks" "$status"
+    done
+
+    echo
+    echo "--------------------------------------------------------------------------------------------"
+    read -p "Search Another Block Venue? (y)es or (q)uit: " choice
+    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+        list_venue_details
+    else
+        main_menu
+    fi
+}
 
 # Function to handle the E option (Book Venue)
 # ... (Add your implementation for option E here)
@@ -90,12 +154,10 @@ main_menu() {
             search_patron
             ;;
         C|c)
-            # Call the function to handle option C
-            # add_venue
+            add_new_venue
             ;;
         D|d)
-            # Call the function to handle option D
-            # list_venue
+            list_venue_details
             ;;
         E|e)
             # Call the function to handle option E
