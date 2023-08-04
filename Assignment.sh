@@ -93,17 +93,67 @@ search_patron() {
     fi
 }
 
+# Author1       : Goh Neng Fu
+# Task          : Add New Venue
+# Description   : Adding new venue into text file
+# Parameters    : (e.g. array  - a list of integers )
+# Return        : (e.g. the newly sorted array) 
+
 # Function to handle the C option (Add New Venue)
 add_new_venue() {
     clear
     echo "Add New Venue"
     echo "=============="
 
-    read -p "Block Name: " block_name
-    read -p "Room Number: " room_number
-    read -p "Room Type: " room_type
-    read -p "Capacity: " capacity
-    read -p "Remarks: " remarks
+    # Input validation for Block Name
+    while true; do
+        read -p "Block Name (alphabet only): " block_name
+        if [[ $block_name =~ ^[[:alpha:]]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Block Name should contain alphabets only."
+        fi
+    done
+
+    # Input validation for Room Number
+    while true; do
+        read -p "Room Number (e.g., AB123): " room_number
+        if [[ $room_number =~ ^[[:alpha:]]{2}[0-9]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Room Number should start with 2 alphabets followed by numbers."
+        fi
+    done
+
+    # Input validation for Room Type
+    while true; do
+        read -p "Room Type (alphabet only): " room_type
+        if [[ $room_type =~ ^[[:alpha:]]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Room Type should contain alphabets only."
+        fi
+    done
+
+    # Input validation for Capacity
+    while true; do
+        read -p "Capacity (numeric only): " capacity
+        if [[ $capacity =~ ^[0-9]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Capacity should contain numeric digits only."
+        fi
+    done
+
+    # Input validation for Remarks
+    while true; do
+        read -p "Remarks (non-numeric): " remarks
+        if [[ $remarks =~ ^[[:alpha:][:space:]]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Remarks should not contain all numeric characters."
+        fi
+    done
 
     # Store venue details in the venue.txt file
     echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
@@ -125,12 +175,13 @@ list_venue_details() {
 
     read -p "Enter Block Name: " search_block
     echo "--------------------------------------------------------------------------------------------"
+
     # Filter and display venue details based on the block name
-    printf "%-15s%-25s%-15s%-35s%-15s\n" "Room Number" "Room Type" "Capacity" "Remarks" "Status"
+    echo -e "Room Number\tRoom Type\tCapacity\tRemarks\t\t\tStatus"
     echo
 
     grep "^$search_block:" venue.txt | while IFS=':' read -r block_name room_number room_type capacity remarks status; do
-        printf "%-15s%-25s%-15s%-35s%-15s\n" "$room_number" "$room_type" "$capacity" "$remarks" "$status"
+        echo -e "$room_number\t\t$room_type\t\t$capacity\t\t$remarks\t\t\t$status"
     done
 
     echo
@@ -142,6 +193,12 @@ list_venue_details() {
         main_menu
     fi
 }
+
+# ... (Previous code for other functions)
+
+# Call the main menu function to start the program
+main_menu
+
 
 # Function to handle the E option (Book Venue)
 # ... (Add your implementation for option E here)
