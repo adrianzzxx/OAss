@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Author1:  Yong Wei Yuan
+# Author2:  Goh Neng Fu
+# Date:    14/07/2023
+# Course:  BACS2093 Operating Systems
+# Purpose: University Venue Management Menu
+
+
+
+
+# Author1:  Yong Wei Yuan
+# Task: Add New Patron
+# Description:Adding new Patron into text file
+# Parameters : (e.g. array  - a list of integers )
+# Return     :  (e.g. the newly sorted array) 
+
 # Function to check if the email is valid
 is_valid_email() {
     local email=$1
