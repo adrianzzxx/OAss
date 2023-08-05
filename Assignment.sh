@@ -12,8 +12,6 @@
 # Author1:  Yong Wei Yuan
 # Task: Add New Patron
 # Description:Adding new Patron into text file
-# Parameters : (e.g. array  - a list of integers )
-# Return     :  (e.g. the newly sorted array) 
 
 # Function to check if the email is valid
 is_valid_email() {
@@ -32,7 +30,16 @@ register_patron() {
     echo "Patron Registration"
     echo "=================="
 
-    read -p "Patron ID (As per TAR UMT format): " patron_id
+    # Validate Patron ID (7-digit number)
+    while true; do
+        read -p "Patron ID (As per TAR UMT format - 7-digit number): " patron_id
+        if [[ $patron_id =~ ^[0-9]{7}$ ]]; then
+            break
+        else
+            echo "Invalid Patron ID format. Please enter a 7-digit number."
+        fi
+    done
+    
     read -p "Patron Full Name (As per NRIC): " full_name
     read -p "Contact Number: " contact_number
 
@@ -93,7 +100,7 @@ search_patron() {
     fi
 }
 
-# Author1       : Goh Neng Fu
+# Author2       : Goh Neng Fu
 # Task          : Add New Venue
 # Description   : Adding new venue into text file
 # Parameters    : (e.g. array  - a list of integers )
