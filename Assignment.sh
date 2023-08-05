@@ -32,11 +32,11 @@ register_patron() {
 
     # Validate Patron ID (7-digit number)
     while true; do
-        read -p "Patron ID (As per TAR UMT format - 7-digit number): " patron_id
+        read -p "Patron ID (As per TAR UMT format): " patron_id
         if [[ $patron_id =~ ^[0-9]{7}$ ]]; then
             break
         else
-            echo "Invalid Patron ID format. Please enter a 7-digit number."
+            echo "Invalid Patron ID format."
         fi
     done
     
