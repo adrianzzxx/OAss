@@ -40,8 +40,33 @@ register_patron() {
         fi
     done
     
-    read -p "Patron Full Name (As per NRIC): " full_name
-    read -p "Contact Number: " contact_number
+    # Validate Patron Full Name (non-empty and no numbers)
+    while true; do
+        read -p "Patron Full Name (As per NRIC): " full_name
+        if [[ -n "$full_name" ]]; then
+            if [[ ! "$full_name" =~ [0-9] ]]; then
+                break
+            else
+                echo "Full Name cannot contain numbers. Please enter a valid name."
+            fi
+        else
+            echo "Full Name cannot be empty. Please enter a value."
+        fi
+    done
+
+    # Validate Contact Number (non-empty and numbers only)
+    while true; do
+        read -p "Contact Number: " contact_number
+        if [[ -n "$contact_number" ]]; then
+            if [[ "$contact_number" =~ ^[0-9]+$ ]]; then
+                break
+            else
+                echo "Contact Number can only contain numbers. Please enter a valid number."
+            fi
+        else
+            echo "Contact Number cannot be empty. Please enter a value."
+        fi
+    done
 
     # Validate the email address
     while true; do
