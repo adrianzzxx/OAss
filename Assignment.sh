@@ -231,9 +231,115 @@ list_venue_details() {
 # Call the main menu function to start the program
 main_menu
 
+# Function to check if a room is available for booking
+is_room_available() {
+    local room_number=$1
+    local booking_date=$2
+    local time_from=$3
+    local time_to=$4
+
+    # Convert time to minutes since midnight
+    time_from_minutes=$((10#${time_from:0:2} * 60 + 10#${time_from:3:2}))
+    time_to_minutes=$((10#${time_to:0:2} * 60 + 10#${time_to:3:2}))
+
+    # Check if booking is within available hours (8am to 8pm)
+    if [[ $time_from_minutes -ge 480 && $time_to_minutes -le 1200 ]]; then
+        # Read existing bookings for the specified room on the given date
+        existing_bookings=$(grep "^.*:$room_number:$booking_date:" booking.txt | cut -d: -f5-6)
+
+        for booking in $existing_bookings; do
+            existing_time_from=$(echo "$booking" | cut -d: -f1)
+            existing_time_to=$(echo "$booking" | cut -d: -f2)
+            existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:3:2}))
+            existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:3:2}))
+
+            # Check for overlap in booking times
+            if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
+                echo "Room is already booked during the requested time."
+                return 1
+            fi
+        done
+
+        return 0
+    else
+        echo "Booking hours are from 8am to 8pm only."
+        return 1
+    fi
+}
 
 # Function to handle the E option (Book Venue)
-# ... (Add your implementation for option E here)
+book_venue() {
+    clear
+    echo "Patron Details Validation"
+    echo "========================="
+
+    read -p "Please enter the Patron’s ID Number: " patron_id
+    patron_details=$(grep "^$patron_id:" patron.txt)
+
+    if [[ -n "$patron_details" ]]; then
+        patron_name=$(echo "$patron_details" | cut -d: -f2)
+        echo "Patron Name (auto display): $patron_name"
+        echo
+        read -p "Press (n) to proceed Book Venue or (q) to return to University Venue Management Menu: " choice
+
+        if [[ "$choice" == "n" || "$choice" == "N" ]]; then
+            clear
+            echo "Booking Venue"
+            echo "=============="
+            
+            read -p "Please enter the Room Number (e.g., 001A): " room_number
+            
+            # Perform a case-insensitive search for the full room number
+            room_details=$(grep -i "^$room_number:" venue.txt)
+
+            if [[ -n "$room_details" ]]; then
+                room_type=$(echo "$room_details" | cut -d: -f3)
+                capacity=$(echo "$room_details" | cut -d: -f4)
+                remarks=$(echo "$room_details" | cut -d: -f5)
+                
+                echo "Room Type (auto display): $room_type"
+                echo "Capacity (auto display): $capacity"
+                echo "Remarks (auto display): $remarks"
+                echo "Status:"
+                
+                # Booking details input
+                echo "Notes: The booking hours shall be from 8am to 8pm only. The booking duration shall be at least 30 minutes per booking."
+                echo "Please enter the following details:"
+                read -p "Booking Date (mm/dd/yyyy): " booking_date
+                read -p "Time From (hh:mm): " time_from
+                read -p "Time To (hh:mm): " time_to
+                read -p "Reasons for Booking: " reasons
+                
+                # Store booking details in the booking.txt file
+                echo "$patron_id:$patron_name:$full_room_number:$booking_date:$time_from:$time_to:$reasons" >> booking.txt
+
+                # Generate booking receipt
+                receipt_filename="${patron_id}_${full_room_number}_${booking_date//\//-}.txt"
+                echo "Venue Booking Receipt" > "$receipt_filename"
+                echo "Patron ID : $patron_id" >> "$receipt_filename" >> "          " >> "Patron Name : $patron_name" >> "$receipt_filename"
+                echo "Room Number : $room_number" >> "$receipt_filename"
+                echo "Date Booking: $booking_date" >> "$receipt_filename"
+                echo "Time From: $time_from" >> "$receipt_filename" >> "          " >> "Time To: $time_to" >> "$receipt_filename" 
+                echo "Reason for Booking: $reasons" >> "$receipt_filename"
+                echo >> "$receipt_filename"
+                echo
+                echo "This is a computer generated receipt with no signature required." >> "$receipt_filename"
+                echo >> "$receipt_filename"
+                echo "Printed on $(date '+%m-%d-%Y %I:%M%p')." >> "$receipt_filename"
+
+                echo "Booking Successful! Receipt saved as $receipt_filename"
+            else
+                echo "Room not found."
+            fi
+        else
+            main_menu
+        fi
+    else
+        echo "Patron ID not found."
+        read -p "Press Enter to continue..."
+        main_menu
+    fi
+}
 
 # Main menu function
 main_menu() {
@@ -264,8 +370,7 @@ main_menu() {
             list_venue_details
             ;;
         E|e)
-            # Call the function to handle option E
-            # book_venue
+            book_venue
             ;;
         Q|q)
             echo "Exiting..."
