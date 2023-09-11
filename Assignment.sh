@@ -287,7 +287,7 @@ book_venue() {
             echo "Booking Venue"
             echo "=============="
             
-            read -p "Please enter the Room Number (e.g., 001A): " room_number
+            read -p "Please enter the Room Number: " room_number
             
             # Perform a case-insensitive search for the full room number
             room_details=$(grep -i "^$room_number:" venue.txt)
