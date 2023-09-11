@@ -188,7 +188,7 @@ add_new_venue() {
     done
 
     # Store venue details in the venue.txt file
-    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
+    echo "$room_number:$block_name:$room_type:$capacity:$remarks:Available" >> venue.txt
 
     echo
     read -p "Add Another New Venue? (y)es or (q)uit: " choice
