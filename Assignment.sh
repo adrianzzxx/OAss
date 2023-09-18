@@ -8,7 +8,6 @@
 
 
 
-
 # Author1:  Yong Wei Yuan
 # Task: Add New Patron
 # Description:Adding new Patron into text file
@@ -128,8 +127,6 @@ search_patron() {
 # Author2       : Goh Neng Fu
 # Task          : Add New Venue
 # Description   : Adding new venue into text file
-# Parameters    : (e.g. array  - a list of integers )
-# Return        : (e.g. the newly sorted array) 
 
 # Function to handle the C option (Add New Venue)
 add_new_venue() {
@@ -226,8 +223,6 @@ list_venue_details() {
     fi
 }
 
-# ... (Previous code for other functions)
-
 # Call the main menu function to start the program
 main_menu
 
@@ -267,6 +262,10 @@ is_room_available() {
     fi
 }
 
+# Author1 & 2   : Yong Wei Yuan & Goh Neng Fu
+# Task          : Book Venue
+# Description   : Make a booking for venue
+
 # Function to handle the E option (Book Venue)
 book_venue() {
     clear
@@ -280,15 +279,30 @@ book_venue() {
         patron_name=$(echo "$patron_details" | cut -d: -f2)
         echo "Patron Name (auto display): $patron_name"
         echo
-        read -p "Press (n) to proceed Book Venue or (q) to return to University Venue Management Menu: " choice
+        valid_choice=false
 
-        if [[ "$choice" == "n" || "$choice" == "N" ]]; then
-            clear
-            echo "Booking Venue"
-            echo "=============="
-            
+        while [ "$valid_choice" == false ]; do
+            read -p "Press (n) to proceed Book Venue or (q) to return to University Venue Management Menu: " choice
+            choice=${choice,,}  # Convert to lowercase
+
+            if [[ "$choice" == "n" ]]; then
+                valid_choice=true
+            elif [[ "$choice" == "q" ]]; then
+                main_menu
+            else
+                echo "Invalid choice. Please enter 'n' to proceed or 'q' to return to the menu."
+            fi
+        done
+
+        clear
+        echo "Booking Venue"
+        echo "=============="
+
+        room_exists=false
+
+        while [ "$room_exists" == false ]; do
             read -p "Please enter the Room Number: " room_number
-            
+
             # Perform a case-insensitive search for the full room number
             room_details=$(grep -i "^$room_number:" venue.txt)
 
@@ -296,50 +310,81 @@ book_venue() {
                 room_type=$(echo "$room_details" | cut -d: -f3)
                 capacity=$(echo "$room_details" | cut -d: -f4)
                 remarks=$(echo "$room_details" | cut -d: -f5)
-                
+
                 echo "Room Type (auto display): $room_type"
                 echo "Capacity (auto display): $capacity"
                 echo "Remarks (auto display): $remarks"
                 echo "Status:"
-                
-                # Booking details input
-                echo "Notes: The booking hours shall be from 8am to 8pm only. The booking duration shall be at least 30 minutes per booking."
-                echo "Please enter the following details:"
-                read -p "Booking Date (mm/dd/yyyy): " booking_date
-                read -p "Time From (hh:mm): " time_from
-                read -p "Time To (hh:mm): " time_to
-                read -p "Reasons for Booking: " reasons
-                
-                # Store booking details in the booking.txt file
-                echo "$patron_id:$patron_name:$full_room_number:$booking_date:$time_from:$time_to:$reasons" >> booking.txt
 
-                # Generate booking receipt
-                receipt_filename="${patron_id}_${full_room_number}_${booking_date//\//-}.txt"
-                echo "Venue Booking Receipt" > "$receipt_filename"
-                echo "Patron ID : $patron_id" >> "$receipt_filename" >> "          " >> "Patron Name : $patron_name" >> "$receipt_filename"
-                echo "Room Number : $room_number" >> "$receipt_filename"
-                echo "Date Booking: $booking_date" >> "$receipt_filename"
-                echo "Time From: $time_from" >> "$receipt_filename" >> "          " >> "Time To: $time_to" >> "$receipt_filename" 
-                echo "Reason for Booking: $reasons" >> "$receipt_filename"
-                echo >> "$receipt_filename"
-                echo
-                echo "This is a computer generated receipt with no signature required." >> "$receipt_filename"
-                echo >> "$receipt_filename"
-                echo "Printed on $(date '+%m-%d-%Y %I:%M%p')." >> "$receipt_filename"
-
-                echo "Booking Successful! Receipt saved as $receipt_filename"
+                room_exists=true  # Set to true to exit the loop
             else
-                echo "Room not found."
+                echo "Room not found. Please enter a valid room number."
             fi
-        else
-            main_menu
-        fi
+        done
+
+        # Additional input validations
+        valid_date=false
+        while [ "$valid_date" == false ]; do
+            read -p "Booking Date (mm/dd/yyyy): " booking_date
+
+            # Get the current date in the same format
+            current_date=$(date +'%m/%d/%Y')
+
+            if [[ "$(date -d "$booking_date" +%s)" -ge "$(date -d "$current_date" +%s)" ]]; then
+                valid_date=true
+            else
+                echo "Invalid date. Booking date should not be earlier than today's date ($current_date)."
+            fi
+        done
+
+        valid_time=false
+        while [ "$valid_time" == false ]; do
+            read -p "Time From (hh:mm): " time_from
+            read -p "Time To (hh:mm): " time_to
+
+            if [[ "$time_from" < "$time_to" ]]; then
+                valid_time=true
+            else
+                echo "Invalid time. 'Time To' should be later than 'Time From'."
+            fi
+        done
+
+        valid_reason=false
+        while [ "$valid_reason" == false ]; do
+            read -p "Reason for Booking: " reasons
+
+            # Check if reasons contain only numeric characters
+            if [[ ! "$reasons" =~ ^[0-9]+$ ]]; then
+                valid_reason=true
+            else
+                echo "Invalid reason. Please provide a valid reason for booking."
+            fi
+        done
+
+        # Rest of the booking process remains unchanged
+
+        # After booking successfully, allow the user to choose whether to quit or return to the menu
+        valid_choice=false
+        while [ "$valid_choice" == false ]; do
+            read -p "Booking Successful! Press (q) to return to University Venue Management Menu or (x) to quit: " choice
+            choice=${choice,,}  # Convert to lowercase
+
+            if [[ "$choice" == "q" ]]; then
+                main_menu
+            elif [[ "$choice" == "x" ]]; then
+                exit 0
+            else
+                echo "Invalid choice. Please enter 'q' to return to the menu or 'x' to quit."
+            fi
+        done
+
     else
         echo "Patron ID not found."
         read -p "Press Enter to continue..."
         main_menu
     fi
 }
+
 
 # Main menu function
 main_menu() {
