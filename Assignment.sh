@@ -177,8 +177,8 @@ add_new_venue() {
 
     # Input validation for Room Type
     while true; do
-        read -p "Room Type (alphabet and spaces allowed): " room_type
-        if [[ $room_type =~ ^[[:alpha:][:space:]]+$ ]]; then
+        read -p "Room Type (Lecture Hall, Tutorial Room, Practical Lab): " room_type
+        if [[ "$room_type" == "Lecture Hall" || "$room_type" == "Tutorial Room" || "$room_type" == "Practical Lab" ]]; then
             break
         else
             echo "Invalid input. Room Type should contain alphabets and spaces only."
@@ -195,18 +195,20 @@ add_new_venue() {
         fi
     done
 
-    # Input validation for Remarks
+    read -p "Remarks (optional): " remarks
+
+        # Input validation for Status
     while true; do
-        read -p "Remarks (non-numeric): " remarks
-        if [[ $remarks =~ ^[[:alpha:][:space:]]+$ ]]; then
+        read -p "Status (Available/Unavailable): " status
+        if [[ "$status" == "Available" || "$status" == "Unavailable" || "$status" == "available" || "$status" == "unavailable" ]]; then
             break
         else
-            echo "Invalid input. Remarks should not contain all numeric characters."
+            echo "Invalid input. Status should be 'Available' or 'Unavailable'."
         fi
     done
 
     # Store venue details in the venue.txt file
-    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
+    echo "$block_name:$room_number:$room_type:$capacity:$remarks:$status" >> venue.txt
 
     echo
     while true; do
@@ -247,11 +249,11 @@ list_venue_details() {
     if grep -q "^$search_block:" venue.txt; then
         echo "--------------------------------------------------------------------------------------------"
         # Filter and display venue details based on the block name
-        echo -e "Room Number\tRoom Type\tCapacity\tRemarks\t\t\tStatus"
+        echo -e "Room Number\tRoom Type\t\tCapacity\tStatus\t\t\tRemarks"
         echo
 
         grep "^$search_block:" venue.txt | while IFS=':' read -r block_name room_number room_type capacity remarks status; do
-            echo -e "$room_number\t\t$room_type\t\t$capacity\t\t$remarks\t\t\t$status"
+            echo -e "$room_number\t\t$room_type\t\t$capacity\t\t$status\t\t$remarks"
         done
 
         echo
@@ -354,35 +356,6 @@ is_room_available() {
 # Task          : Book Venue
 # Description   : Make a booking for venue
 
-# Function to check if a booking time overlaps with existing bookings
-is_time_overlap() {
-    local booking_date="$1"
-    local time_from="$2"
-    local time_to="$3"
-
-    # Convert time to minutes since midnight
-    time_from_minutes=$((10#${time_from:0:2} * 60 + 10#${time_from:3:2}))
-    time_to_minutes=$((10#${time_to:0:2} * 60 + 10#${time_to:3:2}))
-
-    # Read existing bookings for the specified date
-    existing_bookings=$(grep "^.*:$booking_date:" booking.txt | cut -d: -f5-6)
-
-    for booking in $existing_bookings; do
-        existing_time_from=$(echo "$booking" | cut -d: -f1)
-        existing_time_to=$(echo "$booking" | cut -d: -f2)
-        existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:3:2}))
-        existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:3:2}))
-
-        # Check for overlap in booking times
-        if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
-            return 0  # Overlapping time found
-        fi
-    done
-
-    return 1  # No overlapping time found
-}
-
-
 # Function to generate a booking receipt
 generate_booking_receipt() {
     local patron_id="$1"
@@ -411,6 +384,38 @@ generate_booking_receipt() {
     echo "Printed on $(date '+%m-%d-%Y %I:%M%p')." >> "$receipt_filename"
 
     echo "Booking Successful! Receipt saved as $receipt_filename"
+}
+
+# Function to check if a room is available for booking
+is_room_available() {
+    local room_number="$1"
+    local booking_date="$2"
+    local time_from="$3"
+    local time_to="$4"
+
+    # Convert the requested time to minutes since midnight
+    time_from_minutes=$((10#${time_from:0:2} * 60 + 10#${time_from:2:2}))
+    time_to_minutes=$((10#${time_to:0:2} * 60 + 10#${time_to:2:2}))
+
+    # Read existing bookings for the specified room on the given date
+    existing_bookings=$(grep "$room_number:$booking_date:" booking.txt | cut -d: -f5-6)
+
+    for booking in $existing_bookings; do
+        # Split the booking entry by ':' to get time_from and time_to
+        IFS=':' read -r existing_time_from existing_time_to <<< "$booking"
+
+        # Convert the existing booking times to minutes since midnight
+        existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:2:2}))
+        existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:2:2}))
+
+        # Check for overlap in booking times
+        if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
+            echo "Room is already booked during the requested time."
+            return 1
+        fi
+    done
+
+    return 0
 }
 
 # Function to handle the E option (Book Venue)
@@ -448,7 +453,7 @@ book_venue() {
         room_exists=false
 
         while [ "$room_exists" == false ]; do
-            read -p "Please enter the Room Number(example: K001A): " room_number
+            read -p "Please enter the Room Number(example: B001A): " room_number
 
             # Use grep to search for the room number and read its details into variables
             room_details=$(grep "$room_number:" venue.txt)
@@ -479,57 +484,62 @@ book_venue() {
         while [ "$valid_date" == false ]; do
             read -p "Booking Date (mm/dd/yyyy): " booking_date
 
-            # Get the current date in the same format
-            current_date=$(date +'%m/%d/%Y')
+            if [[ -n "$booking_date" ]]; then
+                # Get the current date in the same format
+                current_date=$(date +'%m/%d/%Y')
 
-            # Calculate the timestamp for the booking date and one day in advance
-            booking_date_timestamp=$(date -d "$booking_date" +%s)
-            one_day_in_advance_timestamp=$(date -d "$current_date + 1 day" +%s)
+                # Calculate the timestamp for the booking date and one day in advance
+                booking_date_timestamp=$(date -d "$booking_date" +%s)
+                one_day_in_advance_timestamp=$(date -d "$current_date + 1 day" +%s)
 
-            if [[ "$booking_date_timestamp" -ge "$one_day_in_advance_timestamp" ]]; then
-                valid_date=true
+                if [[ "$booking_date_timestamp" -ge "$one_day_in_advance_timestamp" ]]; then
+                    valid_date=true
+                else
+                    echo "Invalid date. Booking date should be at least one day in advance from today's date ($current_date)."
+                fi
             else
-                echo "Invalid date. Booking date should be at least one day in advance from today's date ($current_date)."
+                echo "Booking date cannot be empty. Please enter a valid date."
             fi
         done
 
         valid_time=false
 
-        while [ "$valid_time" == false ]; do
-            read -p "Time From (hh:mm): " time_from
+            while [ "$valid_time" == false ]; do
+            # Prompt for Time From
+            read -p "Time From (hhmm(24hrs format)): " time_from
 
-            if [[ "$time_from" =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
-                # Check if time_from is greater than or equal to 08:00
-                if [[ "$time_from" < "08:00" ]]; then
+            if [[ "$time_from" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
+                # Check if time_from is greater than or equal to 0800
+                if [[ "$time_from" < "0800" ]]; then
                     echo "Invalid time. 'Time From' should be 08:00 or later."
                 else
                     # Prompt for Time To
-                    read -p "Time To (hh:mm): " time_to
-                    
-                    if [[ "$time_to" =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+                    read -p "Time To (hhmm(24hrs format)): " time_to
+
+                    if [[ "$time_to" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                         # Check if time_to is less than 2000
-                        if [[ "$time_to" > "20:00" ]]; then
-                            echo "Invalid time. 'Time To' should be 20:00 or earlier."
+                        if [[ "$time_to" > "2000" ]]; then
+                            echo "Invalid time. 'Time To' should be 2000 or earlier."
                         # Check if the time interval is at least 30 minutes
                         elif (( $(date -d "$time_to" +%s) - $(date -d "$time_from" +%s) < 1800 )); then
                             echo "Invalid time interval. The booking should be at least 30 minutes."
                         else
-                            # Check for overlapping bookings
-                            if is_time_overlap "$booking_date" "$time_from" "$time_to"; then
+                            # Check if the room is available for booking
+                            if is_room_available "$room_number" "$booking_date" "$time_from" "$time_to"; then
                                 valid_time=true
                             else
-                                # Overlapping booking found, ask the user to enter a different time
-                                echo "Please choose a different time slot. The room is already booked during the requested time."
+                                echo "Room is not available for booking during the specified time."
                             fi
                         fi
                     else
-                        echo "Invalid time format. Please use hh:mm format (e.g., 08:30) for 'Time To'."
+                        echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time To'."
                     fi
                 fi
             else
-                echo "Invalid time format. Please use hh:mm format (e.g., 08:30) for 'Time From'."
+                echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time From'."
             fi
         done
+
 
 
         valid_reason=false
@@ -571,6 +581,7 @@ book_venue() {
         main_menu
     fi
 }
+
 
 # Main menu function
 main_menu() {
