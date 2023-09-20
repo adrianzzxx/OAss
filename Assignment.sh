@@ -134,6 +134,7 @@ search_patron() {
 # Description   : Adding new venue into text file
 
 # Function to handle the C option (Add New Venue)
+# Function to handle the C option (Add New Venue)
 add_new_venue() {
     clear
     echo "Add New Venue"
@@ -189,8 +190,18 @@ add_new_venue() {
         fi
     done
 
-    # Store venue details in the venue.txt file
-    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
+    # Input validation for Status
+    while true; do
+        read -p "Status (Available/Unavailable): " status
+        if [[ "$status" == "Available" || "$status" == "Unavailable" || "$status" == "available" || "$status" == "unavailable" ]]; then
+            break
+        else
+            echo "Invalid input. Status should be 'Available' or 'Unavailable'."
+        fi
+    done
+
+    # Store venue details in the venue.txt file, including the default status
+    echo "$block_name:$room_number:$room_type:$capacity:$remarks:$status" >> venue.txt
 
     echo
     read -p "Add Another New Venue? (y)es or (q)uit: " choice
@@ -200,6 +211,7 @@ add_new_venue() {
         main_menu
     fi
 }
+
 
 # Function to handle the D option (List Venue)
 list_venue_details() {
@@ -220,13 +232,50 @@ list_venue_details() {
 
     echo
     echo "--------------------------------------------------------------------------------------------"
-    read -p "Search Another Block Venue? (y)es or (q)uit: " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-        list_venue_details
-    else
-        main_menu
-    fi
+    echo "Options:"
+    echo "1 - Change Room Status to Unavailable"
+    echo "2 - Change Room Status to Available"
+    echo "3 - Back to University Venue Management Menu"
+    echo
+    read -p "Select an option: " option
+
+    case $option in
+        1)
+            change_room_status "Unavailable"
+            ;;
+        2)
+            change_room_status "Available"
+            ;;
+        3)
+            main_menu
+            ;;
+        *)
+            echo "Invalid option. Please select a valid option."
+            read -p "Press Enter to continue..."
+            list_venue_details
+            ;;
+    esac
 }
+
+# Function to change room status
+change_room_status() {
+    local new_status=$1
+
+    read -p "Enter the Room Number to change status: " room_number
+
+    # Check if the room exists
+    if grep -q "^.*:$room_number:" venue.txt; then
+        # Update the room status
+        sed -i "s/^.*:$room_number:.*/$search_block:$room_number:$room_type:$capacity:$remarks:$new_status/" venue.txt
+        echo "Room status changed to $new_status."
+    else
+        echo "Room not found. Please enter a valid room number."
+    fi
+
+    read -p "Press Enter to continue..."
+    list_venue_details
+}
+
 
 # Call the main menu function to start the program
 main_menu
