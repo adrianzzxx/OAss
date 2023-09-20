@@ -33,7 +33,12 @@ register_patron() {
     while true; do
         read -p "Patron ID (As per TAR UMT format): " patron_id
         if [[ $patron_id =~ ^[0-9]{7}$ ]]; then
-            break
+            # Check if the Patron ID already exists in patron.txt
+            if grep -q "^$patron_id:" patron.txt; then
+                echo "Patron ID already exists. Please enter a different Patron ID."
+            else
+                break
+            fi
         else
             echo "Invalid Patron ID format."
         fi
@@ -57,10 +62,10 @@ register_patron() {
     while true; do
         read -p "Contact Number: " contact_number
         if [[ -n "$contact_number" ]]; then
-            if [[ "$contact_number" =~ ^[0-9]+$ ]]; then
+            if [[ $contact_number =~ ^[0-9]{10,11}$ ]]; then
                 break
             else
-                echo "Contact Number can only contain numbers. Please enter a valid number."
+                echo "Contact Number can only contain numbers and between 10 to 11 digit number. Please enter a valid number."
             fi
         else
             echo "Contact Number cannot be empty. Please enter a value."
