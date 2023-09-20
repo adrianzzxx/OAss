@@ -6,11 +6,9 @@
 # Course:  BACS2093 Operating Systems
 # Purpose: University Venue Management Menu
 
-
-
 # Author1:  Yong Wei Yuan
-# Task: Add New Patron
-# Description:Adding new Patron into text file
+# Task: Add New Patron & Search Existing Patron
+# Description: Adding new Patron into text file
 
 # Function to check if the email is valid
 is_valid_email() {
@@ -87,12 +85,21 @@ register_patron() {
 
     echo
 
+    while true; do
     read -p "Register Another Patron? (y)es or (q)uit: " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-        register_patron
-    else
-        main_menu
-    fi
+    case "$choice" in
+        [Yy])
+            register_patron
+            ;;
+        [Qq])
+            main_menu
+            ;;
+        *)
+            echo "Invalid input. Please enter 'y' or 'q'."
+            ;;
+    esac
+done
+
 }
 
 # Function to handle the B option (Search Patron Details)
@@ -121,19 +128,27 @@ search_patron() {
         echo "Patron ID not found."
     fi
 
+    while true; do
     read -p "Search Another Patron? (y)es or (q)uit: " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-        search_patron
-    else
-        main_menu
-    fi
+    case "$choice" in
+        [Yy])
+            search_patron
+            ;;
+        [Qq])
+            main_menu
+            ;;
+        *)
+            echo "Invalid input. Please enter 'y' or 'q'."
+            ;;
+    esac
+done
+
 }
 
 # Author2       : Goh Neng Fu
-# Task          : Add New Venue
-# Description   : Adding new venue into text file
+# Task          : Add New Venue & Search Existing Venue
+# Description   : Adding new venue into text file & search the existing venue
 
-# Function to handle the C option (Add New Venue)
 # Function to handle the C option (Add New Venue)
 add_new_venue() {
     clear
@@ -152,21 +167,21 @@ add_new_venue() {
 
     # Input validation for Room Number
     while true; do
-        read -p "Room Number (e.g., AB123): " room_number
-        if [[ $room_number =~ ^[[:alpha:]]{2}[0-9]+$ ]]; then
+        read -p "Room Number (combination of alphabet and numbers, no space): " room_number
+        if [[ $room_number =~ ^[[:alnum:]]+$ && ! $room_number =~ ^[0-9]+$ ]]; then
             break
         else
-            echo "Invalid input. Room Number should start with 2 alphabets followed by numbers."
+            echo "Invalid input. Room Number should contain a combination of alphabets and numbers, with no spaces, and not all numeric."
         fi
     done
 
     # Input validation for Room Type
     while true; do
-        read -p "Room Type (alphabet only): " room_type
-        if [[ $room_type =~ ^[[:alpha:]]+$ ]]; then
+        read -p "Room Type (alphabet and spaces allowed): " room_type
+        if [[ $room_type =~ ^[[:alpha:][:space:]]+$ ]]; then
             break
         else
-            echo "Invalid input. Room Type should contain alphabets only."
+            echo "Invalid input. Room Type should contain alphabets and spaces only."
         fi
     done
 
@@ -190,28 +205,27 @@ add_new_venue() {
         fi
     done
 
-    # Input validation for Status
-    while true; do
-        read -p "Status (Available/Unavailable): " status
-        if [[ "$status" == "Available" || "$status" == "Unavailable" || "$status" == "available" || "$status" == "unavailable" ]]; then
-            break
-        else
-            echo "Invalid input. Status should be 'Available' or 'Unavailable'."
-        fi
-    done
-
-    # Store venue details in the venue.txt file, including the default status
-    echo "$block_name:$room_number:$room_type:$capacity:$remarks:$status" >> venue.txt
+    # Store venue details in the venue.txt file
+    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
 
     echo
-    read -p "Add Another New Venue? (y)es or (q)uit: " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-        add_new_venue
-    else
-        main_menu
-    fi
+    while true; do
+        read -p "Add Another New Venue? (y)es or (q)uit: " choice
+        case "$choice" in
+            [Yy])
+                add_new_venue
+                break
+                ;;
+            [Qq])
+                main_menu
+                break
+                ;;
+            *)
+                echo "Invalid input. Please enter 'y' to add another venue or 'q' to quit."
+                ;;
+        esac
+    done
 }
-
 
 # Function to handle the D option (List Venue)
 list_venue_details() {
@@ -219,46 +233,60 @@ list_venue_details() {
     echo "List Venue Details"
     echo
 
-    read -p "Enter Block Name: " search_block
-    echo "--------------------------------------------------------------------------------------------"
-
-    # Filter and display venue details based on the block name
-    echo -e "Room Number\tRoom Type\tCapacity\tRemarks\t\t\tStatus"
-    echo
-
-    grep "^$search_block:" venue.txt | while IFS=':' read -r block_name room_number room_type capacity remarks status; do
-        echo -e "$room_number\t\t$room_type\t\t$capacity\t\t$remarks\t\t\t$status"
+    # Input validation for Block Name
+    while true; do
+        read -p "Enter Block Name (alphabet only): " search_block
+        if [[ $search_block =~ ^[[:alpha:]]+$ ]]; then
+            break
+        else
+            echo "Invalid input. Block Name should contain alphabets only."
+        fi
     done
 
-    echo
-    echo "--------------------------------------------------------------------------------------------"
-    echo "Options:"
-    echo "1 - Change Room Status to Unavailable"
-    echo "2 - Change Room Status to Available"
-    echo "3 - Search Another Block"
-    echo "4 - Back to University Venue Management Menu"
-    echo
-    read -p "Select an option: " option
+    # Check if the block name exists in the venue.txt file
+    if grep -q "^$search_block:" venue.txt; then
+        echo "--------------------------------------------------------------------------------------------"
+        # Filter and display venue details based on the block name
+        echo -e "Room Number\tRoom Type\tCapacity\tRemarks\t\t\tStatus"
+        echo
 
-    case $option in
-        1)
-            change_room_status "Unavailable"
-            ;;
-        2)
-            change_room_status "Available"
-            ;;
-        3)
-            list_venue_details
-            ;;
-        4)
-            main_menu
-            ;;
-        *)
-            echo "Invalid option. Please select a valid option."
-            read -p "Press Enter to continue..."
-            list_venue_details
-            ;;
-    esac
+        grep "^$search_block:" venue.txt | while IFS=':' read -r block_name room_number room_type capacity remarks status; do
+            echo -e "$room_number\t\t$room_type\t\t$capacity\t\t$remarks\t\t\t$status"
+        done
+
+        echo
+        echo "--------------------------------------------------------------------------------------------"
+        echo "Options:"
+        echo "1 - Change Room Status to Unavailable"
+        echo "2 - Change Room Status to Available"
+        echo "3 - Search Another Block"
+        echo "4 - Back to University Venue Management Menu"
+        echo
+        read -p "Select an option: " option
+
+        case $option in
+            1)
+                change_room_status "Unavailable"
+                ;;
+            2)
+                change_room_status "Available"
+                ;;
+            3)
+                list_venue_details
+                ;;
+            4)
+                main_menu
+                ;;
+            *)
+                echo "Invalid option. Please select a valid option."
+                read -p "Press Enter to continue..."
+                list_venue_details
+                ;;
+        esac
+    else
+        echo "Block not found. Please enter a valid Block Name."
+        list_venue_details  # Allow the user to enter the block name again
+    fi
 }
 
 # Function to change room status while keeping other details unchanged
@@ -283,10 +311,44 @@ change_room_status() {
     list_venue_details
 }
 
-
-
 # Call the main menu function to start the program
 main_menu
+
+# Function to check if a room is available for booking
+is_room_available() {
+    local room_number=$1
+    local booking_date=$2
+    local time_from=$3
+    local time_to=$4
+
+    # Convert time to minutes since midnight
+    time_from_minutes=$((10#${time_from:0:2} * 60 + 10#${time_from:3:2}))
+    time_to_minutes=$((10#${time_to:0:2} * 60 + 10#${time_to:3:2}))
+
+    # Check if booking is within available hours (8am to 8pm)
+    if [[ $time_from_minutes -ge 480 && $time_to_minutes -le 1200 ]]; then
+        # Read existing bookings for the specified room on the given date
+        existing_bookings=$(grep "^.*:$room_number:$booking_date:" booking.txt | cut -d: -f5-6)
+
+        for booking in $existing_bookings; do
+            existing_time_from=$(echo "$booking" | cut -d: -f1)
+            existing_time_to=$(echo "$booking" | cut -d: -f2)
+            existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:3:2}))
+            existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:3:2}))
+
+            # Check for overlap in booking times
+            if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
+                echo "Room is already booked during the requested time."
+                return 1
+            fi
+        done
+
+        return 0
+    else
+        echo "Booking hours are from 8am to 8pm only."
+        return 1
+    fi
+}
 
 # Author1 & 2   : Yong Wei Yuan & Goh Neng Fu
 # Task          : Book Venue
@@ -509,7 +571,6 @@ book_venue() {
         main_menu
     fi
 }
-
 
 # Main menu function
 main_menu() {
