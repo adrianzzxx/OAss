@@ -235,8 +235,8 @@ list_venue_details() {
     echo "Options:"
     echo "1 - Change Room Status to Unavailable"
     echo "2 - Change Room Status to Available"
-    echo "3 - Back to University Venue Management Menu"
-    echo "4 - Search Another Block"
+    echo "3 - Search Another Block"
+    echo "4 - Back to University Venue Management Menu"
     echo
     read -p "Select an option: " option
 
@@ -248,10 +248,10 @@ list_venue_details() {
             change_room_status "Available"
             ;;
         3)
-            main_menu
+            list_venue_details
             ;;
         4)
-            list_venue_details
+            main_menu
             ;;
         *)
             echo "Invalid option. Please select a valid option."
@@ -288,45 +288,68 @@ change_room_status() {
 # Call the main menu function to start the program
 main_menu
 
-# Function to check if a room is available for booking
-is_room_available() {
-    local room_number=$1
-    local booking_date=$2
-    local time_from=$3
-    local time_to=$4
+# Author1 & 2   : Yong Wei Yuan & Goh Neng Fu
+# Task          : Book Venue
+# Description   : Make a booking for venue
+
+# Function to check if a booking time overlaps with existing bookings
+is_time_overlap() {
+    local booking_date="$1"
+    local time_from="$2"
+    local time_to="$3"
 
     # Convert time to minutes since midnight
     time_from_minutes=$((10#${time_from:0:2} * 60 + 10#${time_from:3:2}))
     time_to_minutes=$((10#${time_to:0:2} * 60 + 10#${time_to:3:2}))
 
-    # Check if booking is within available hours (8am to 8pm)
-    if [[ $time_from_minutes -ge 480 && $time_to_minutes -le 1200 ]]; then
-        # Read existing bookings for the specified room on the given date
-        existing_bookings=$(grep "^.*:$room_number:$booking_date:" booking.txt | cut -d: -f5-6)
+    # Read existing bookings for the specified date
+    existing_bookings=$(grep "^.*:$booking_date:" booking.txt | cut -d: -f5-6)
 
-        for booking in $existing_bookings; do
-            existing_time_from=$(echo "$booking" | cut -d: -f1)
-            existing_time_to=$(echo "$booking" | cut -d: -f2)
-            existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:3:2}))
-            existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:3:2}))
+    for booking in $existing_bookings; do
+        existing_time_from=$(echo "$booking" | cut -d: -f1)
+        existing_time_to=$(echo "$booking" | cut -d: -f2)
+        existing_time_from_minutes=$((10#${existing_time_from:0:2} * 60 + 10#${existing_time_from:3:2}))
+        existing_time_to_minutes=$((10#${existing_time_to:0:2} * 60 + 10#${existing_time_to:3:2}))
 
-            # Check for overlap in booking times
-            if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
-                echo "Room is already booked during the requested time."
-                return 1
-            fi
-        done
+        # Check for overlap in booking times
+        if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
+            return 0  # Overlapping time found
+        fi
+    done
 
-        return 0
-    else
-        echo "Booking hours are from 8am to 8pm only."
-        return 1
-    fi
+    return 1  # No overlapping time found
 }
 
-# Author1 & 2   : Yong Wei Yuan & Goh Neng Fu
-# Task          : Book Venue
-# Description   : Make a booking for venue
+
+# Function to generate a booking receipt
+generate_booking_receipt() {
+    local patron_id="$1"
+    local patron_name="$2"
+    local room_number="$3"
+    local booking_date="$4"
+    local time_from="$5"
+    local time_to="$6"
+    local reasons="$7"
+
+    # Define the receipt filename based on patron_id, room_number, and booking_date
+    local receipt_filename="${patron_id}_${room_number}_${booking_date//\//-}.txt"
+
+    # Create the receipt file and write booking details to it
+    echo "Venue Booking Receipt" > "$receipt_filename"
+    echo "Patron ID: $patron_id" >> "$receipt_filename"
+    echo "Patron Name: $patron_name" >> "$receipt_filename"
+    echo "Room Number: $room_number" >> "$receipt_filename"
+    echo "Booking Date: $booking_date" >> "$receipt_filename"
+    echo "Time From: $time_from" >> "$receipt_filename"
+    echo "Time To: $time_to" >> "$receipt_filename"
+    echo "Reason for Booking: $reasons" >> "$receipt_filename"
+    echo >> "$receipt_filename"
+    echo "This is a computer-generated receipt with no signature required." >> "$receipt_filename"
+    echo >> "$receipt_filename"
+    echo "Printed on $(date '+%m-%d-%Y %I:%M%p')." >> "$receipt_filename"
+
+    echo "Booking Successful! Receipt saved as $receipt_filename"
+}
 
 # Function to handle the E option (Book Venue)
 book_venue() {
@@ -374,12 +397,12 @@ book_venue() {
         room_exists=false
 
         while [ "$room_exists" == false ]; do
-            read -p "Please enter the Room Number: " search_room_number
+            read -p "Please enter the Room Number: " room_number
 
             # Use grep to search for the room number and read its details into variables
-            room_details=$(grep -i "^$search_room_number:" venue.txt)
+            room_details=$(grep "$room_number:" venue.txt)
 
-            if [[ -n "$room_details" ]]; then
+            if [[ "$room_details" ]]; then
                 room_type=$(echo "$room_details" | cut -d: -f3)
                 capacity=$(echo "$room_details" | cut -d: -f4)
                 remarks=$(echo "$room_details" | cut -d: -f5)
@@ -408,24 +431,55 @@ book_venue() {
             # Get the current date in the same format
             current_date=$(date +'%m/%d/%Y')
 
-            if [[ "$(date -d "$booking_date" +%s)" -ge "$(date -d "$current_date" +%s)" ]]; then
+            # Calculate the timestamp for the booking date and one day in advance
+            booking_date_timestamp=$(date -d "$booking_date" +%s)
+            one_day_in_advance_timestamp=$(date -d "$current_date + 1 day" +%s)
+
+            if [[ "$booking_date_timestamp" -ge "$one_day_in_advance_timestamp" ]]; then
                 valid_date=true
             else
-                echo "Invalid date. Booking date should not be earlier than today's date ($current_date)."
+                echo "Invalid date. Booking date should be at least one day in advance from today's date ($current_date)."
             fi
         done
 
         valid_time=false
+
         while [ "$valid_time" == false ]; do
             read -p "Time From (hh:mm): " time_from
-            read -p "Time To (hh:mm): " time_to
 
-            if [[ "$time_from" < "$time_to" ]]; then
-                valid_time=true
+            if [[ "$time_from" =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+                # Check if time_from is greater than or equal to 08:00
+                if [[ "$time_from" < "08:00" ]]; then
+                    echo "Invalid time. 'Time From' should be 08:00 or later."
+                else
+                    # Prompt for Time To
+                    read -p "Time To (hh:mm): " time_to
+                    
+                    if [[ "$time_to" =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+                        # Check if time_to is less than 2000
+                        if [[ "$time_to" > "20:00" ]]; then
+                            echo "Invalid time. 'Time To' should be 20:00 or earlier."
+                        # Check if the time interval is at least 30 minutes
+                        elif (( $(date -d "$time_to" +%s) - $(date -d "$time_from" +%s) < 1800 )); then
+                            echo "Invalid time interval. The booking should be at least 30 minutes."
+                        else
+                            # Check for overlapping bookings
+                            if is_time_overlap "$booking_date" "$time_from" "$time_to"; then
+                                valid_time=true
+                            else
+                                # Overlapping booking found, ask the user to enter a different time
+                                echo "Please choose a different time slot. The room is already booked during the requested time."
+                            fi
+                        fi
+                    else
+                        echo "Invalid time format. Please use hh:mm format (e.g., 08:30) for 'Time To'."
+                    fi
+                fi
             else
-                echo "Invalid time. 'Time To' should be later than 'Time From'."
+                echo "Invalid time format. Please use hh:mm format (e.g., 08:30) for 'Time From'."
             fi
         done
+
 
         valid_reason=false
         while [ "$valid_reason" == false ]; do
@@ -438,11 +492,15 @@ book_venue() {
                 echo "Invalid reason. Please provide a valid reason for booking."
             fi
         done
+        echo "$patron_id:$patron_name:$room_number:$booking_date:$time_from:$time_to:$reasons" >> booking.txt
+
+        # Generate the booking receipt
+        generate_booking_receipt "$patron_id" "$patron_name" "$room_number" "$booking_date" "$time_from" "$time_to" "$reasons"
 
         # After booking successfully, allow the user to choose whether to quit or return to the menu
         valid_choice=false
         while [ "$valid_choice" == false ]; do
-            read -p "Booking Successful! Press (q) to return to University Venue Management Menu or (x) to quit: " choice
+            read -p "Press (q) to return to University Venue Management Menu or (x) to quit: " choice
             choice=${choice,,}  # Convert to lowercase
 
             if [[ "$choice" == "q" ]]; then
@@ -453,6 +511,8 @@ book_venue() {
                 echo "Invalid choice. Please enter 'q' to return to the menu or 'x' to quit."
             fi
         done
+
+        
 
     else
         echo "Patron ID not found."
