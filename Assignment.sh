@@ -236,6 +236,7 @@ list_venue_details() {
     echo "1 - Change Room Status to Unavailable"
     echo "2 - Change Room Status to Available"
     echo "3 - Back to University Venue Management Menu"
+    echo "4 - Search Another Block"
     echo
     read -p "Select an option: " option
 
@@ -249,6 +250,9 @@ list_venue_details() {
         3)
             main_menu
             ;;
+        4)
+            list_venue_details
+            ;;
         *)
             echo "Invalid option. Please select a valid option."
             read -p "Press Enter to continue..."
@@ -257,7 +261,7 @@ list_venue_details() {
     esac
 }
 
-# Function to change room status
+# Function to change room status while keeping other details unchanged
 change_room_status() {
     local new_status=$1
 
@@ -265,8 +269,11 @@ change_room_status() {
 
     # Check if the room exists
     if grep -q "^.*:$room_number:" venue.txt; then
-        # Update the room status
-        sed -i "s/^.*:$room_number:.*/$search_block:$room_number:$room_type:$capacity:$remarks:$new_status/" venue.txt
+        # Get the existing room details
+        existing_details=$(grep "^.*:$room_number:" venue.txt)
+        old_status=$(echo "$existing_details" | cut -d: -f6)  # Get the old status
+        new_line="${existing_details/$old_status/$new_status}"  # Replace old status with new status
+        sed -i "s|$existing_details|$new_line|" venue.txt
         echo "Room status changed to $new_status."
     else
         echo "Room not found. Please enter a valid room number."
@@ -275,6 +282,7 @@ change_room_status() {
     read -p "Press Enter to continue..."
     list_venue_details
 }
+
 
 
 # Call the main menu function to start the program
@@ -352,25 +360,41 @@ book_venue() {
         echo "Booking Venue"
         echo "=============="
 
+        # Prompt for Block Name
+        valid_block_name=false
+        while [ "$valid_block_name" == false ]; do
+            read -p "Block Name (alphabet only): " block_name
+            if [[ $block_name =~ ^[[:alpha:]]+$ ]]; then
+                valid_block_name=true
+            else
+                echo "Invalid input. Block Name should contain alphabets only."
+            fi
+        done
+
         room_exists=false
 
         while [ "$room_exists" == false ]; do
-            read -p "Please enter the Room Number: " room_number
+            read -p "Please enter the Room Number: " search_room_number
 
-            # Perform a case-insensitive search for the full room number
-            room_details=$(grep -i "^$room_number:" venue.txt)
+            # Use grep to search for the room number and read its details into variables
+            room_details=$(grep -i "^$search_room_number:" venue.txt)
 
             if [[ -n "$room_details" ]]; then
                 room_type=$(echo "$room_details" | cut -d: -f3)
                 capacity=$(echo "$room_details" | cut -d: -f4)
                 remarks=$(echo "$room_details" | cut -d: -f5)
+                status=$(echo "$room_details" | cut -d: -f6)
 
-                echo "Room Type (auto display): $room_type"
-                echo "Capacity (auto display): $capacity"
-                echo "Remarks (auto display): $remarks"
-                echo "Status:"
+                if [[ "$status" == "Available" ]]; then
+                    echo "Room Type (auto display): $room_type"
+                    echo "Capacity (auto display): $capacity"
+                    echo "Remarks (auto display): $remarks"
+                    echo "Status (auto display): $status"
 
-                room_exists=true  # Set to true to exit the loop
+                    room_exists=true  # Set to true to exit the loop
+                else
+                    echo "Room is not available for booking. Please enter a different room number."
+                fi
             else
                 echo "Room not found. Please enter a valid room number."
             fi
