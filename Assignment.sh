@@ -383,21 +383,10 @@ book_venue() {
         echo "Booking Venue"
         echo "=============="
 
-        # Prompt for Block Name
-        valid_block_name=false
-        while [ "$valid_block_name" == false ]; do
-            read -p "Block Name (alphabet only): " block_name
-            if [[ $block_name =~ ^[[:alpha:]]+$ ]]; then
-                valid_block_name=true
-            else
-                echo "Invalid input. Block Name should contain alphabets only."
-            fi
-        done
-
         room_exists=false
 
         while [ "$room_exists" == false ]; do
-            read -p "Please enter the Room Number: " room_number
+            read -p "Please enter the Room Number(example: K001A): " room_number
 
             # Use grep to search for the room number and read its details into variables
             room_details=$(grep "$room_number:" venue.txt)
