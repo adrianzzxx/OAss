@@ -410,7 +410,6 @@ is_room_available() {
 
         # Check for overlap in booking times
         if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
-            echo "Room is already booked during the requested time."
             return 1
         fi
     done
