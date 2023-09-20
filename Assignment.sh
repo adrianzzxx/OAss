@@ -190,7 +190,7 @@ add_new_venue() {
     done
 
     # Store venue details in the venue.txt file
-    echo "$room_number:$block_name:$room_type:$capacity:$remarks:Available" >> venue.txt
+    echo "$block_name:$room_number:$room_type:$capacity:$remarks:Available" >> venue.txt
 
     echo
     read -p "Add Another New Venue? (y)es or (q)uit: " choice
@@ -365,8 +365,6 @@ book_venue() {
                 echo "Invalid reason. Please provide a valid reason for booking."
             fi
         done
-
-        # Rest of the booking process remains unchanged
 
         # After booking successfully, allow the user to choose whether to quit or return to the menu
         valid_choice=false
