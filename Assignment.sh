@@ -10,12 +10,17 @@
 # Task: Add New Patron & Search Existing Patron
 # Description: Adding new Patron into text file
 
-# Function to check if the email is valid
+# Function to check if the email is valid based on patron ID length
 is_valid_email() {
-    local email=$1
-    local regex='^[A-Za-z0-9._%+-]+@student\.tarc\.edu\.my$'
-    if [[ $email =~ $regex ]]; then
-        return 0  # Valid email format
+    local patron_id=$1
+    local email=$2
+    local regex_4digits='[A-Za-z0-9._%+-]+@tarc\.edu\.my$'
+    local regex_7digits='[A-Za-z0-9._%+-]+@student\.tarc\.edu\.my$'
+
+    if [[ ${#patron_id} -eq 4 && $email =~ $regex_4digits ]]; then
+        return 0  # Valid email format for 4-digit patron ID
+    elif [[ ${#patron_id} -eq 7 && $email =~ $regex_7digits ]]; then
+        return 0  # Valid email format for 7-digit patron ID
     else
         return 1  # Invalid email format
     fi
@@ -27,18 +32,22 @@ register_patron() {
     echo "Patron Registration"
     echo "=================="
 
-    # Validate Patron ID (7-digit number)
+    # Validate Patron ID (4 or 7-digit number)
     while true; do
-        read -p "Patron ID (As per TAR UMT format): " patron_id
-        if [[ $patron_id =~ ^[0-9]{7}$ ]]; then
+        read -p "Patron ID (4 or 7 digits): " patron_id
+        if [[ $patron_id =~ ^[0-9]{4}$ || $patron_id =~ ^[0-9]{7}$ ]]; then
             # Check if the Patron ID already exists in patron.txt
             if grep -q "^$patron_id:" patron.txt; then
+                echo "**************************************************************************"
                 echo "Patron ID already exists. Please enter a different Patron ID."
+                echo "**************************************************************************"
             else
                 break
             fi
         else
+            echo "**************************************************************************"
             echo "Invalid Patron ID format."
+            echo "**************************************************************************"
         fi
     done
     
@@ -49,10 +58,14 @@ register_patron() {
             if [[ ! "$full_name" =~ [0-9] ]]; then
                 break
             else
+                echo "**************************************************************************"
                 echo "Full Name cannot contain numbers. Please enter a valid name."
+                echo "**************************************************************************"
             fi
         else
+            echo "**************************************************************************"
             echo "Full Name cannot be empty. Please enter a value."
+            echo "**************************************************************************"
         fi
     done
 
@@ -63,20 +76,34 @@ register_patron() {
             if [[ $contact_number =~ ^[0-9]{10,11}$ ]]; then
                 break
             else
-                echo "Contact Number can only contain numbers and between 10 to 11 digit number. Please enter a valid number."
+                echo "**************************************************************************"
+                echo "Contact Number can only contain numbers and between 10 to 11 digit number." 
+                echo "Please enter a valid number."
+                echo "**************************************************************************"
             fi
         else
+            echo "**************************************************************************"
             echo "Contact Number cannot be empty. Please enter a value."
+            echo "**************************************************************************"
         fi
     done
-
+    
     # Validate the email address
     while true; do
         read -p "Email Address (As per TAR UMT format): " email_address
-        if is_valid_email "$email_address"; then
-            break
+        if is_valid_email "$patron_id" "$email_address"; then
+            # Check if the email address already exists in patron.txt
+            if grep -q "$email_address" patron.txt; then
+                echo "**************************************************************************"
+                echo "Email Address already exists. Please enter a different email address."
+                echo "**************************************************************************"
+            else
+                break
+            fi
         else
+            echo "**************************************************************************"
             echo "Invalid email format. Please enter a valid email address."
+            echo "**************************************************************************"
         fi
     done
 
@@ -95,7 +122,9 @@ register_patron() {
             main_menu
             ;;
         *)
+            echo "**************************************************************************"
             echo "Invalid input. Please enter 'y' or 'q'."
+            echo "**************************************************************************"
             ;;
     esac
 done
@@ -125,7 +154,9 @@ search_patron() {
         echo "Email Address (auto display): $email_address"
         echo
     else
+        echo "**************************************************************************"
         echo "Patron ID not found."
+        echo "**************************************************************************"
     fi
 
     while true; do
@@ -138,7 +169,9 @@ search_patron() {
             main_menu
             ;;
         *)
+            echo "**************************************************************************"
             echo "Invalid input. Please enter 'y' or 'q'."
+            echo "**************************************************************************"
             ;;
     esac
 done
@@ -340,14 +373,18 @@ is_room_available() {
 
             # Check for overlap in booking times
             if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
+                echo "**************************************************************************"
                 echo "Room is already booked during the requested time."
+                echo "**************************************************************************"
                 return 1
             fi
         done
 
         return 0
     else
+        echo "**************************************************************************"
         echo "Booking hours are from 8am to 8pm only."
+        echo "**************************************************************************"
         return 1
     fi
 }
@@ -441,7 +478,9 @@ book_venue() {
             elif [[ "$choice" == "q" ]]; then
                 main_menu
             else
+                echo "**************************************************************************"
                 echo "Invalid choice. Please enter 'n' to proceed or 'q' to return to the menu."
+                echo "**************************************************************************"
             fi
         done
 
@@ -471,10 +510,14 @@ book_venue() {
 
                     room_exists=true  # Set to true to exit the loop
                 else
+                    echo "**************************************************************************"
                     echo "Room is not available for booking. Please enter a different room number."
+                    echo "**************************************************************************"
                 fi
             else
+                echo "**************************************************************************"
                 echo "Room not found. Please enter a valid room number."
+                echo "**************************************************************************"
             fi
         done
 
@@ -494,10 +537,14 @@ book_venue() {
                 if [[ "$booking_date_timestamp" -ge "$one_day_in_advance_timestamp" ]]; then
                     valid_date=true
                 else
+                    echo "**************************************************************************"
                     echo "Invalid date. Booking date should be at least one day in advance from today's date ($current_date)."
+                    echo "**************************************************************************"
                 fi
             else
+                echo "**************************************************************************"
                 echo "Booking date cannot be empty. Please enter a valid date."
+                echo "**************************************************************************"
             fi
         done
 
@@ -510,7 +557,9 @@ book_venue() {
             if [[ "$time_from" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                 # Check if time_from is greater than or equal to 0800
                 if [[ "$time_from" < "0800" ]]; then
-                    echo "Invalid time. 'Time From' should be 08:00 or later."
+                    echo "**************************************************************************"
+                    echo "Invalid time. 'Time From' should be 0800 or later."
+                    echo "**************************************************************************"
                 else
                     # Prompt for Time To
                     read -p "Time To (hhmm(24hrs format)): " time_to
@@ -518,24 +567,34 @@ book_venue() {
                     if [[ "$time_to" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                         # Check if time_to is less than 2000
                         if [[ "$time_to" > "2000" ]]; then
+                            echo "**************************************************************************"
                             echo "Invalid time. 'Time To' should be 2000 or earlier."
+                            echo "**************************************************************************"
                         # Check if the time interval is at least 30 minutes
                         elif (( $(date -d "$time_to" +%s) - $(date -d "$time_from" +%s) < 1800 )); then
+                            echo "**************************************************************************"
                             echo "Invalid time interval. The booking should be at least 30 minutes."
+                            echo "**************************************************************************"
                         else
                             # Check if the room is available for booking
                             if is_room_available "$room_number" "$booking_date" "$time_from" "$time_to"; then
                                 valid_time=true
                             else
+                                echo "**************************************************************************"
                                 echo "Room is not available for booking during the specified time."
+                                echo "**************************************************************************"
                             fi
                         fi
                     else
+                        echo "**************************************************************************"
                         echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time To'."
+                        echo "**************************************************************************"
                     fi
                 fi
             else
+                echo "**************************************************************************"
                 echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time From'."
+                echo "**************************************************************************"
             fi
         done
 
@@ -549,7 +608,9 @@ book_venue() {
             if [[ ! "$reasons" =~ ^[0-9]+$ ]]; then
                 valid_reason=true
             else
+                echo "**************************************************************************"
                 echo "Invalid reason. Please provide a valid reason for booking."
+                echo "**************************************************************************"
             fi
         done
         echo "$patron_id:$patron_name:$room_number:$booking_date:$time_from:$time_to:$reasons" >> booking.txt
@@ -568,14 +629,18 @@ book_venue() {
             elif [[ "$choice" == "x" ]]; then
                 exit 0
             else
+                echo "**************************************************************************"
                 echo "Invalid choice. Please enter 'q' to return to the menu or 'x' to quit."
+                echo "**************************************************************************"
             fi
         done
 
         
 
     else
+        echo "**************************************************************************"
         echo "Patron ID not found."
+        echo "**************************************************************************"
         read -p "Press Enter to continue..."
         main_menu
     fi
@@ -618,7 +683,9 @@ main_menu() {
             exit 0
             ;;
         *)
+            echo "**************************************************************************"
             echo "Invalid choice. Please select a valid option."
+            echo "**************************************************************************"
             read -p "Press Enter to continue..."
             main_menu
             ;;
