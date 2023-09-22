@@ -38,16 +38,19 @@ register_patron() {
         if [[ $patron_id =~ ^[0-9]{4}$ || $patron_id =~ ^[0-9]{7}$ ]]; then
             # Check if the Patron ID already exists in patron.txt
             if grep -q "^$patron_id:" patron.txt; then
-                echo "**************************************************************************"
-                echo "Patron ID already exists. Please enter a different Patron ID."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Patron ID already exists."
+                echo "Please enter a different Patron ID."
+                echo "*******************************************************************************************************"
             else
                 break
             fi
         else
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
             echo "Invalid Patron ID format."
-            echo "**************************************************************************"
+            echo "4 digit for Lecture ID"
+            echo "7 digit for Student ID"
+            echo "*******************************************************************************************************"
         fi
     done
     
@@ -58,14 +61,16 @@ register_patron() {
             if [[ ! "$full_name" =~ [0-9] ]]; then
                 break
             else
-                echo "**************************************************************************"
-                echo "Full Name cannot contain numbers. Please enter a valid name."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Full Name cannot contain numbers."
+                echo "Please enter a valid name."
+                echo "*******************************************************************************************************"
             fi
         else
-            echo "**************************************************************************"
-            echo "Full Name cannot be empty. Please enter a value."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Full Name cannot be empty."
+            echo "Please enter a valid name."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -76,15 +81,16 @@ register_patron() {
             if [[ $contact_number =~ ^[0-9]{10,11}$ ]]; then
                 break
             else
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
                 echo "Contact Number can only contain numbers and between 10 to 11 digit number." 
-                echo "Please enter a valid number."
-                echo "**************************************************************************"
+                echo "Please enter a valid contact number."
+                echo "*******************************************************************************************************"
             fi
         else
-            echo "**************************************************************************"
-            echo "Contact Number cannot be empty. Please enter a value."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Contact Number cannot be empty."
+            echo "Please enter a valid contact number."
+            echo "*******************************************************************************************************"
         fi
     done
     
@@ -94,16 +100,18 @@ register_patron() {
         if is_valid_email "$patron_id" "$email_address"; then
             # Check if the email address already exists in patron.txt
             if grep -q "$email_address" patron.txt; then
-                echo "**************************************************************************"
-                echo "Email Address already exists. Please enter a different email address."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Email Address already exists."
+                echo "Please enter a different email address."
+                echo "*******************************************************************************************************"
             else
                 break
             fi
         else
-            echo "**************************************************************************"
-            echo "Invalid email format. Please enter a valid email address."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Invalid email format."
+            echo "Please enter a valid email address."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -122,9 +130,10 @@ register_patron() {
             main_menu
             ;;
         *)
-            echo "**************************************************************************"
-            echo "Invalid input. Please enter 'y' or 'q'."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Invalid input." 
+            echo "Please enter 'y' or 'q'."
+            echo "*******************************************************************************************************"
             ;;
     esac
 done
@@ -154,9 +163,9 @@ search_patron() {
         echo "Email Address (auto display): $email_address"
         echo
     else
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
         echo "Patron ID not found."
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
     fi
 
     while true; do
@@ -169,9 +178,10 @@ search_patron() {
             main_menu
             ;;
         *)
-            echo "**************************************************************************"
-            echo "Invalid input. Please enter 'y' or 'q'."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Please enter 'y' or 'q'."
+            echo "*******************************************************************************************************"
             ;;
     esac
 done
@@ -194,7 +204,10 @@ add_new_venue() {
         if [[ $block_name =~ ^[[:alpha:]]+$ ]]; then
             break
         else
-            echo "Invalid input. Block Name should contain alphabets only."
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Block Name should contain alphabets only."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -202,9 +215,20 @@ add_new_venue() {
     while true; do
         read -p "Room Number (combination of alphabet and numbers, no space): " room_number
         if [[ $room_number =~ ^[[:alnum:]]+$ && ! $room_number =~ ^[0-9]+$ ]]; then
-            break
+            # Check if the room number already exists
+            if grep -q "$room_number:" venue.txt; then
+                echo "*******************************************************************************************************"
+                echo "Room Number already exists."
+                echo "Please enter a different Room Number."
+                echo "*******************************************************************************************************"
+            else
+                break
+            fi
         else
-            echo "Invalid input. Room Number should contain a combination of alphabets and numbers, with no spaces, and not all numeric."
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Room Number should contain a combination of alphabets and numbers, with no spaces, and not all numeric."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -214,7 +238,10 @@ add_new_venue() {
         if [[ "$room_type" == "Lecture Hall" || "$room_type" == "Tutorial Room" || "$room_type" == "Practical Lab" ]]; then
             break
         else
-            echo "Invalid input. Room Type should contain alphabets and spaces only."
+            echo "*******************************************************************************************************"
+            echo "Invalid input." 
+            echo "Room Type should be Lecture Hall or Tutorial Room or Practical Lab."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -224,42 +251,65 @@ add_new_venue() {
         if [[ $capacity =~ ^[0-9]+$ ]]; then
             break
         else
-            echo "Invalid input. Capacity should contain numeric digits only."
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Capacity should contain numeric digits only."
+            echo "*******************************************************************************************************"
         fi
     done
 
+    # Input validation for Remarks
     read -p "Remarks (optional): " remarks
 
-        # Input validation for Status
+    # Check if remarks is empty and set it to "NULL" if it is
+    if [ -z "$remarks" ]; then
+        remarks="NULL"
+    fi
+
+    # Input validation for Status
     while true; do
         read -p "Status (Available/Unavailable): " status
         if [[ "$status" == "Available" || "$status" == "Unavailable" || "$status" == "available" || "$status" == "unavailable" ]]; then
             break
         else
-            echo "Invalid input. Status should be 'Available' or 'Unavailable'."
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Status should be 'Available' or 'Unavailable'."
+            echo "*******************************************************************************************************"
         fi
     done
 
-    # Store venue details in the venue.txt file
-    echo "$block_name:$room_number:$room_type:$capacity:$remarks:$status" >> venue.txt
+    # Check if the room number already exists
+    if grep -q "$room_number:" venue.txt; then
+        echo "*******************************************************************************************************"
+        echo "Room Number already exists."
+        echo "Please enter a different Room Number."
+        echo "*******************************************************************************************************"
+    else
+        # Store venue details in the venue.txt file
+        echo "$block_name:$room_number:$room_type:$capacity:$remarks:$status" >> venue.txt
 
-    echo
-    while true; do
-        read -p "Add Another New Venue? (y)es or (q)uit: " choice
-        case "$choice" in
-            [Yy])
-                add_new_venue
-                break
-                ;;
-            [Qq])
-                main_menu
-                break
-                ;;
-            *)
-                echo "Invalid input. Please enter 'y' to add another venue or 'q' to quit."
-                ;;
-        esac
-    done
+        echo
+        while true; do
+            read -p "Add Another New Venue? (y)es or (q)uit: " choice
+            case "$choice" in
+                [Yy])
+                    add_new_venue
+                    break
+                    ;;
+                [Qq])
+                    main_menu
+                    break
+                    ;;
+                *)
+                    echo "*******************************************************************************************************"
+                    echo "Invalid input." 
+                    echo "Please enter 'y' to add another venue or 'q' to quit."
+                    echo "*******************************************************************************************************"
+                    ;;
+            esac
+        done
+    fi
 }
 
 # Function to handle the D option (List Venue)
@@ -274,7 +324,10 @@ list_venue_details() {
         if [[ $search_block =~ ^[[:alpha:]]+$ ]]; then
             break
         else
-            echo "Invalid input. Block Name should contain alphabets only."
+            echo "*******************************************************************************************************"
+            echo "Invalid input."
+            echo "Block Name should contain alphabets only."
+            echo "*******************************************************************************************************"
         fi
     done
 
@@ -313,13 +366,19 @@ list_venue_details() {
                 main_menu
                 ;;
             *)
-                echo "Invalid option. Please select a valid option."
+                echo "*******************************************************************************************************"
+                echo "Invalid option."
+                echo "Please select a valid option."
+                echo "*******************************************************************************************************"
                 read -p "Press Enter to continue..."
                 list_venue_details
                 ;;
         esac
     else
-        echo "Block not found. Please enter a valid Block Name."
+        echo "*******************************************************************************************************"
+        echo "Block not found."
+        echo "Please enter a valid Block Name."
+        echo "*******************************************************************************************************"
         list_venue_details  # Allow the user to enter the block name again
     fi
 }
@@ -339,7 +398,10 @@ change_room_status() {
         sed -i "s|$existing_details|$new_line|" venue.txt
         echo "Room status changed to $new_status."
     else
-        echo "Room not found. Please enter a valid room number."
+        echo "*******************************************************************************************************"
+        echo "Room not found."
+        echo "Please enter a valid room number."
+        echo "*******************************************************************************************************"
     fi
 
     read -p "Press Enter to continue..."
@@ -373,18 +435,18 @@ is_room_available() {
 
             # Check for overlap in booking times
             if ((time_from_minutes < existing_time_to_minutes && time_to_minutes > existing_time_from_minutes)); then
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
                 echo "Room is already booked during the requested time."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
                 return 1
             fi
         done
 
         return 0
     else
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
         echo "Booking hours are from 8am to 8pm only."
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
         return 1
     fi
 }
@@ -478,9 +540,10 @@ book_venue() {
             elif [[ "$choice" == "q" ]]; then
                 main_menu
             else
-                echo "**************************************************************************"
-                echo "Invalid choice. Please enter 'n' to proceed or 'q' to return to the menu."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Invalid choice."
+                echo "Please enter 'n' to proceed or 'q' to return to the menu."
+                echo "*******************************************************************************************************"
             fi
         done
 
@@ -510,14 +573,16 @@ book_venue() {
 
                     room_exists=true  # Set to true to exit the loop
                 else
-                    echo "**************************************************************************"
-                    echo "Room is not available for booking. Please enter a different room number."
-                    echo "**************************************************************************"
+                    echo "*******************************************************************************************************"
+                    echo "Room is not available for booking."
+                    echo "Please enter a different room number."
+                    echo "*******************************************************************************************************"
                 fi
             else
-                echo "**************************************************************************"
-                echo "Room not found. Please enter a valid room number."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Room not found."
+                echo "Please enter a valid room number."
+                echo "*******************************************************************************************************"
             fi
         done
 
@@ -537,14 +602,16 @@ book_venue() {
                 if [[ "$booking_date_timestamp" -ge "$one_day_in_advance_timestamp" ]]; then
                     valid_date=true
                 else
-                    echo "**************************************************************************"
-                    echo "Invalid date. Booking date should be at least one day in advance from today's date ($current_date)."
-                    echo "**************************************************************************"
+                    echo "*******************************************************************************************************"
+                    echo "Invalid date."
+                    echo "Booking date should be at least one day in advance from today's date ($current_date)."
+                    echo "*******************************************************************************************************"
                 fi
             else
-                echo "**************************************************************************"
-                echo "Booking date cannot be empty. Please enter a valid date."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Booking date cannot be empty."
+                echo "Please enter a valid date."
+                echo "*******************************************************************************************************"
             fi
         done
 
@@ -557,9 +624,10 @@ book_venue() {
             if [[ "$time_from" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                 # Check if time_from is greater than or equal to 0800
                 if [[ "$time_from" < "0800" ]]; then
-                    echo "**************************************************************************"
-                    echo "Invalid time. 'Time From' should be 0800 or later."
-                    echo "**************************************************************************"
+                    echo "*******************************************************************************************************"
+                    echo "Invalid time."
+                    echo "'Time From' should be 0800 or later."
+                    echo "*******************************************************************************************************"
                 else
                     # Prompt for Time To
                     read -p "Time To (hhmm(24hrs format)): " time_to
@@ -567,34 +635,38 @@ book_venue() {
                     if [[ "$time_to" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                         # Check if time_to is less than 2000
                         if [[ "$time_to" > "2000" ]]; then
-                            echo "**************************************************************************"
-                            echo "Invalid time. 'Time To' should be 2000 or earlier."
-                            echo "**************************************************************************"
+                            echo "*******************************************************************************************************"
+                            echo "Invalid time."
+                            echo "'Time To' should be 2000 or earlier."
+                            echo "*******************************************************************************************************"
                         # Check if the time interval is at least 30 minutes
                         elif (( $(date -d "$time_to" +%s) - $(date -d "$time_from" +%s) < 1800 )); then
-                            echo "**************************************************************************"
-                            echo "Invalid time interval. The booking should be at least 30 minutes."
-                            echo "**************************************************************************"
+                            echo "*******************************************************************************************************"
+                            echo "Invalid time interval."
+                            echo "The booking should be at least 30 minutes."
+                            echo "*******************************************************************************************************"
                         else
                             # Check if the room is available for booking
                             if is_room_available "$room_number" "$booking_date" "$time_from" "$time_to"; then
                                 valid_time=true
                             else
-                                echo "**************************************************************************"
+                                echo "*******************************************************************************************************"
                                 echo "Room is not available for booking during the specified time."
-                                echo "**************************************************************************"
+                                echo "*******************************************************************************************************"
                             fi
                         fi
                     else
-                        echo "**************************************************************************"
-                        echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time To'."
-                        echo "**************************************************************************"
+                        echo "*******************************************************************************************************"
+                        echo "Invalid time format."
+                        echo "Please use hhmm format (e.g., 0830) for 'Time To'."
+                        echo "*******************************************************************************************************"
                     fi
                 fi
             else
-                echo "**************************************************************************"
-                echo "Invalid time format. Please use hh:mm format (e.g., 0830) for 'Time From'."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Invalid time format."
+                echo "Please use hhmm format (e.g., 0830) for 'Time From'."
+                echo "*******************************************************************************************************"
             fi
         done
 
@@ -608,9 +680,10 @@ book_venue() {
             if [[ ! "$reasons" =~ ^[0-9]+$ ]]; then
                 valid_reason=true
             else
-                echo "**************************************************************************"
-                echo "Invalid reason. Please provide a valid reason for booking."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Invalid reason."
+                echo "Please provide a valid reason for booking."
+                echo "*******************************************************************************************************"
             fi
         done
         echo "$patron_id:$patron_name:$room_number:$booking_date:$time_from:$time_to:$reasons" >> booking.txt
@@ -629,18 +702,19 @@ book_venue() {
             elif [[ "$choice" == "x" ]]; then
                 exit 0
             else
-                echo "**************************************************************************"
-                echo "Invalid choice. Please enter 'q' to return to the menu or 'x' to quit."
-                echo "**************************************************************************"
+                echo "*******************************************************************************************************"
+                echo "Invalid choice."
+                echo "Please enter 'q' to return to the menu or 'x' to quit."
+                echo "*******************************************************************************************************"
             fi
         done
 
         
 
     else
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
         echo "Patron ID not found."
-        echo "**************************************************************************"
+        echo "*******************************************************************************************************"
         read -p "Press Enter to continue..."
         main_menu
     fi
@@ -683,9 +757,10 @@ main_menu() {
             exit 0
             ;;
         *)
-            echo "**************************************************************************"
-            echo "Invalid choice. Please select a valid option."
-            echo "**************************************************************************"
+            echo "*******************************************************************************************************"
+            echo "Invalid choice."
+            echo "Please select a valid option."
+            echo "*******************************************************************************************************"
             read -p "Press Enter to continue..."
             main_menu
             ;;
