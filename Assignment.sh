@@ -34,7 +34,7 @@ register_patron() {
 
     # Validate Patron ID (4 or 7-digit number)
     while true; do
-        read -p "Patron ID (4 or 7 digits): " patron_id
+        read -p "Patron ID (4 or 7 digits)            : " patron_id
         if [[ $patron_id =~ ^[0-9]{4}$ || $patron_id =~ ^[0-9]{7}$ ]]; then
             # Check if the Patron ID already exists in patron.txt
             if grep -q "^$patron_id:" patron.txt; then
@@ -56,7 +56,7 @@ register_patron() {
     
     # Validate Patron Full Name (non-empty and no numbers)
     while true; do
-        read -p "Patron Full Name (As per NRIC): " full_name
+        read -p "Patron Full Name (As per NRIC)       : " full_name
         if [[ -n "$full_name" ]]; then
             if [[ ! "$full_name" =~ [0-9] ]]; then
                 break
@@ -76,7 +76,7 @@ register_patron() {
 
     # Validate Contact Number (non-empty and numbers only)
     while true; do
-        read -p "Contact Number: " contact_number
+        read -p "Contact Number                       : " contact_number
         if [[ -n "$contact_number" ]]; then
             if [[ $contact_number =~ ^[0-9]{10,11}$ ]]; then
                 break
@@ -158,9 +158,9 @@ search_patron() {
         contact_number=$(echo "$patron_details" | cut -d: -f3)
         email_address=$(echo "$patron_details" | cut -d: -f4)
 
-        echo "Full Name (auto display): $patron_name"
-        echo "Contact Number (auto display): $contact_number"
-        echo "Email Address (auto display): $email_address"
+        echo -e "Full Name (auto display)\t: $patron_name"
+        echo -e "Contact Number (auto display)\t: $contact_number"
+        echo -e "Email Address (auto display)\t: $email_address"
         echo
     else
         echo "*******************************************************************************************************"
@@ -200,7 +200,7 @@ add_new_venue() {
 
     # Input validation for Block Name
     while true; do
-        read -p "Block Name (alphabet only): " block_name
+        read -p "Block Name (alphabet only)                                  : " block_name
         if [[ $block_name =~ ^[[:alpha:]]+$ ]]; then
             break
         else
@@ -213,7 +213,7 @@ add_new_venue() {
 
     # Input validation for Room Number
     while true; do
-        read -p "Room Number (combination of alphabet and numbers, no space): " room_number
+        read -p "Room Number (combination of alphabet and numbers, no space) : " room_number
         if [[ $room_number =~ ^[[:alnum:]]+$ && ! $room_number =~ ^[0-9]+$ ]]; then
             # Check if the room number already exists
             if grep -q "$room_number:" venue.txt; then
@@ -234,7 +234,7 @@ add_new_venue() {
 
     # Input validation for Room Type
     while true; do
-        read -p "Room Type (Lecture Hall, Tutorial Room, Practical Lab): " room_type
+        read -p "Room Type (Lecture Hall, Tutorial Room, Practical Lab)      : " room_type
         if [[ "$room_type" == "Lecture Hall" || "$room_type" == "Tutorial Room" || "$room_type" == "Practical Lab" ]]; then
             break
         else
@@ -247,7 +247,7 @@ add_new_venue() {
 
     # Input validation for Capacity
     while true; do
-        read -p "Capacity (numeric only): " capacity
+        read -p "Capacity (numeric only)                                     : " capacity
         if [[ $capacity =~ ^[0-9]+$ ]]; then
             break
         else
@@ -259,7 +259,7 @@ add_new_venue() {
     done
 
     # Input validation for Remarks
-    read -p "Remarks (optional): " remarks
+    read -p "Remarks (optional)                                          : " remarks
 
     # Check if remarks is empty and set it to "NULL" if it is
     if [ -z "$remarks" ]; then
@@ -268,7 +268,7 @@ add_new_venue() {
 
     # Input validation for Status
     while true; do
-        read -p "Status (Available/Unavailable): " status
+        read -p "Status (Available/Unavailable)                              : " status
         if [[ "$status" == "Available" || "$status" == "Unavailable" || "$status" == "available" || "$status" == "unavailable" ]]; then
             break
         else
@@ -409,7 +409,7 @@ change_room_status() {
 }
 
 # Call the main menu function to start the program
-main_menu
+#main_menu
 
 # Function to check if a room is available for booking
 is_room_available() {
@@ -527,7 +527,7 @@ book_venue() {
 
     if [[ -n "$patron_details" ]]; then
         patron_name=$(echo "$patron_details" | cut -d: -f2)
-        echo "Patron Name (auto display): $patron_name"
+        echo "Patron Name (auto display)         : $patron_name"
         echo
         valid_choice=false
 
@@ -551,10 +551,20 @@ book_venue() {
         echo "Booking Venue"
         echo "=============="
 
+        echo "Available Rooms for Booking:"
+    
+        # Filter available rooms based on status
+        available_rooms=$(awk -F: '$6 == "Available" {print $2}' venue.txt)
+
+        # Display available room numbers
+        echo "$available_rooms" | tr '\n' ','
+        echo 
+        echo "=============================================================="
+
         room_exists=false
 
         while [ "$room_exists" == false ]; do
-            read -p "Please enter the Room Number(example: B001A): " room_number
+            read -p "Please enter the Room Number(example: B001A)    : " room_number
 
             # Use grep to search for the room number and read its details into variables
             room_details=$(grep "$room_number:" venue.txt)
@@ -566,10 +576,10 @@ book_venue() {
                 status=$(echo "$room_details" | cut -d: -f6)
 
                 if [[ "$status" == "Available" ]]; then
-                    echo "Room Type (auto display): $room_type"
-                    echo "Capacity (auto display): $capacity"
-                    echo "Remarks (auto display): $remarks"
-                    echo "Status (auto display): $status"
+                    echo -e "Room Type (auto display)\t\t\t: $room_type"
+                    echo -e "Capacity (auto display)\t\t\t\t: $capacity"
+                    echo -e "Remarks (auto display)\t\t\t\t: $remarks"
+                    echo -e "Status (auto display)\t\t\t\t: $status"
 
                     room_exists=true  # Set to true to exit the loop
                 else
@@ -589,7 +599,7 @@ book_venue() {
         # Additional input validations
         valid_date=false
         while [ "$valid_date" == false ]; do
-            read -p "Booking Date (mm/dd/yyyy): " booking_date
+            read -p "Booking Date (mm/dd/yyyy)                       : " booking_date
 
             if [[ -n "$booking_date" ]]; then
                 # Get the current date in the same format
@@ -617,9 +627,9 @@ book_venue() {
 
         valid_time=false
 
-            while [ "$valid_time" == false ]; do
+        while [ "$valid_time" == false ]; do
             # Prompt for Time From
-            read -p "Time From (hhmm(24hrs format)): " time_from
+            read -p "Time From (hhmm(24hrs format))                  : " time_from
 
             if [[ "$time_from" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                 # Check if time_from is greater than or equal to 0800
@@ -630,7 +640,7 @@ book_venue() {
                     echo "*******************************************************************************************************"
                 else
                     # Prompt for Time To
-                    read -p "Time To (hhmm(24hrs format)): " time_to
+                    read -p "Time To (hhmm(24hrs format))                    : " time_to
 
                     if [[ "$time_to" =~ ^[0-2][0-9][0-5][0-9]$ ]]; then
                         # Check if time_to is less than 2000
@@ -674,7 +684,7 @@ book_venue() {
 
         valid_reason=false
         while [ "$valid_reason" == false ]; do
-            read -p "Reason for Booking: " reasons
+            read -p "Reason for Booking                              : " reasons
 
             # Check if reasons contain only numeric characters
             if [[ ! "$reasons" =~ ^[0-9]+$ ]]; then
@@ -695,7 +705,7 @@ book_venue() {
         valid_choice=false
         while [ "$valid_choice" == false ]; do
             read -p "Press (q) to return to University Venue Management Menu or (x) to quit: " choice
-            choice=${choice,,}  # Convert to lowercase
+             choice=${choice,,}  # Convert to lowercase
 
             if [[ "$choice" == "q" ]]; then
                 main_menu
@@ -709,7 +719,7 @@ book_venue() {
             fi
         done
 
-        
+
 
     else
         echo "*******************************************************************************************************"
