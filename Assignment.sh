@@ -700,7 +700,7 @@ main_menu() {
         *)
             echo "*********************************************"
             echo "Invalid choice. Please select a valid option."
-            cho "*********************************************"
+            echo "*********************************************"
             read -p "Press Enter to continue..."
             main_menu
             ;;
